@@ -74,9 +74,12 @@ const btnClose = document.querySelector('.form__btn--close');
 // Logout timer
 const labelTimer = document.querySelector('.timer');
 
-const displayMovements = function (movements) {
+const displayMovements = function (movements, sort = false) {
   containerMovements.innerHTML = '';
-  movements.forEach((mov, i) => {
+
+  const movs = sort ? movements.slice().sort((a, b) => a - b) : movements;
+
+  movs.forEach((mov, i) => {
     const type = mov > 0 ? 'deposit' : 'withdrawal';
     const html = `
     <div class="movements__row">
@@ -144,15 +147,15 @@ btnLogin.addEventListener('click', function (e) {
   e.preventDefault();
 
   currentAccount = accounts.find(
-    acc => acc.username === inputLoginUsername.value
+    acc =>
+      acc.username === inputLoginUsername.value &&
+      acc.pin === Number(inputLoginPin.value)
   );
 
-  if (currentAccount?.pin === Number(inputLoginPin.value)) {
-    // Display UI and message
-    labelWelcome.innerHTML = `Welcome back, ${
-      currentAccount.owner.split(' ')[0]
-    }`;
-  }
+  // Display UI and message
+  labelWelcome.innerHTML = `Welcome back, ${
+    currentAccount.owner.split(' ')[0]
+  }`;
 
   containerApp.style.opacity = 100;
 
@@ -188,4 +191,48 @@ btnTransfer.addEventListener('click', function (e) {
     // Update UI
     updateUI(currentAccount);
   }
+});
+
+btnLoan.addEventListener('click', function (e) {
+  e.preventDefault();
+
+  const amount = Number(inputLoanAmount.value);
+
+  if (amount > 0 && currentAccount.movements.some(mov => mov >= amount * 0.1)) {
+    // Add movement
+    currentAccount.movements.push(amount);
+
+    // Update UI
+    updateUI(currentAccount);
+  }
+  inputLoanAmount.value = '';
+});
+
+btnClose.addEventListener('click', function (e) {
+  e.preventDefault();
+
+  if (
+    currentAccount.username === inputCloseUsername.value &&
+    currentAccount.pin === Number(inputClosePin.value)
+  ) {
+    const index = accounts.findIndex(
+      acc =>
+        acc.username === inputCloseUsername.value &&
+        acc.pin === Number(inputClosePin.value)
+    );
+    accounts.splice(index, 1);
+    console.log(index);
+    containerApp.style.opacity = 0;
+    labelWelcome.innerHTML = 'Log in to get started';
+  }
+  console.log(accounts);
+  inputCloseUsername.value = '';
+  inputClosePin.value = '';
+});
+
+let sorted = false;
+btnSort.addEventListener('click', function (e) {
+  e.preventDefault();
+  displayMovements(currentAccount.movements, !sorted);
+  sorted = !sorted;
 });
